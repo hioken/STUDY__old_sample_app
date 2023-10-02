@@ -77,16 +77,23 @@ class LogoutTest < Logout
 end
 
 class RememberingTest < UsersLogin
+  def setup
+    super
+    log_in_as(@user, remember_me: '1')
+  end
 
   test "login with remembering" do
-    log_in_as(@user, remember_me: '1')
-    assert_equal cookies[:remember_token], assigns(:user).remember_token
+    assert assigns(:user).authenticated?(cookies[:remember_token])
+  end
+  
+  test "authenticated after reset_session" do
+    get root_path
+    session[:user_id] = nil
+    assert current_user(cookies[:user_id])
+    # IntegrationTestがcookies.encryptedをサポートしてないため爆死
   end
 
   test "login without remembering" do
-    # Cookieを保存してログイン
-    log_in_as(@user, remember_me: '1')
-    # Cookieが削除されていることを検証してからログイン
     log_in_as(@user, remember_me: '0')
     assert cookies[:remember_token].blank?
   end
